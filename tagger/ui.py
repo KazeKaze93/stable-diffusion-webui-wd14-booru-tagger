@@ -10,8 +10,7 @@ try:
 except ImportError:
     tf_version = '0.0.0'
 
-from html import escape as html_esc
-
+from modules import shared  # pylint: disable=import-error
 from modules import ui  # pylint: disable=import-error
 from modules import generation_parameters_copypaste as parameters_copypaste  # pylint: disable=import-error # noqa
 
@@ -33,6 +32,17 @@ COMMON_OUTPUT = Tuple[
     Optional[Dict[str, float]],  # excluded tag confidences
     str,               # error message
 ]
+
+
+def register_tagger_use_space_separator_option() -> None:
+    shared.opts.add_option(
+        key='tagger_use_space_separator',
+        info=shared.OptionInfo(
+            False,
+            label='Use space separator instead of comma (for Booru upload)',
+            section=('tagger', 'Tagger'),
+        ),
+    )
 
 
 def unload_interrogators() -> Tuple[str]:
@@ -161,12 +171,11 @@ def search_filter(filt: str) -> COMMON_OUTPUT:
         tags = {k: v for k, v in tags.items() if re_part.search(k)}
         lost = {k: v for k, v in lost.items() if re_part.search(k)}
 
-    h_tags = ', '.join(f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
-                       f'true)">{k}</a>' for k in tags.keys())
-    h_lost = ', '.join(f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
-                       f'false)">{k}</a>' for k in lost.keys())
+    use_space = getattr(shared.opts, 'tagger_use_space_separator', False)
+    tag_line, h_tags, h_lost = It.postprocess_tags(
+        tags, lost, use_space_separator=use_space)
 
-    return (', '.join(tags.keys()), h_tags, h_lost, ratings, tags, lost, info)
+    return (tag_line, h_tags, h_lost, ratings, tags, lost, info)
 
 
 def on_ui_tabs():

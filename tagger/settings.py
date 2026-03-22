@@ -19,6 +19,8 @@ def slider_wrapper(value, elem_id, **kwargs):
 
 def on_ui_settings():
     """Called when the UI settings tab is opened"""
+    from tagger.ui import register_tagger_use_space_separator_option  # pylint: disable=import-error,import-outside-toplevel # noqa: E501
+    register_tagger_use_space_separator_option()
     Its = InterrogatorSettings
     section = 'tagger', 'Tagger'
     shared.opts.add_option(

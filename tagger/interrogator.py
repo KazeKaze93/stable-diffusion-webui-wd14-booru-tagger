@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import io
 import json
+from html import escape as html_esc
 import inspect
 from re import match as re_match
 from platform import system, uname
@@ -78,6 +79,24 @@ class Interrogator:
             errors += 'Fix to write correct output:<br><ul><li>' + \
                       '</li><li>'.join(QData.err) + '</li></ul>'
         return errors
+
+    @staticmethod
+    def postprocess_tags(
+        tags: Dict[str, float],
+        lost: Dict[str, float],
+        use_space_separator: bool = False,
+    ) -> Tuple[str, str, str]:
+        sep = ' ' if use_space_separator else ', '
+        tag_line = sep.join(tags.keys())
+        h_tags = sep.join(
+            f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
+            f'true)">{k}</a>' for k in tags.keys()
+        )
+        h_lost = sep.join(
+            f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
+            f'false)">{k}</a>' for k in lost.keys()
+        )
+        return tag_line, h_tags, h_lost
 
     @classmethod
     def set(cls, key: str) -> Callable[[str], Tuple[str, str]]:
