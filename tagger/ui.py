@@ -10,6 +10,8 @@ try:
 except ImportError:
     tf_version = '0.0.0'
 
+from html import escape as html_esc
+
 from modules import shared  # pylint: disable=import-error
 from modules import ui  # pylint: disable=import-error
 from modules import generation_parameters_copypaste as parameters_copypaste  # pylint: disable=import-error # noqa
@@ -142,10 +144,15 @@ def move_selection_to_input(
     if len(tags) == 0:
         return ('', None, '')
 
+    sep = ' ' if getattr(shared.opts, 'tagger_use_space_separator', False) else ', '
     if got != '':
-        got = got + ', '
+        got = got + sep
 
-    (data, info) = It.set(field)(got + ', '.join(tags.keys()))
+    tags = sep.join(map(
+        lambda x: x[0],
+        sorted(tags.items(), key=lambda x: x[1], reverse=True),
+    ))
+    (data, info) = It.set(field)(got + tags)
     return ('', data, info)
 
 
@@ -171,9 +178,18 @@ def search_filter(filt: str) -> COMMON_OUTPUT:
         tags = {k: v for k, v in tags.items() if re_part.search(k)}
         lost = {k: v for k, v in lost.items() if re_part.search(k)}
 
-    use_space = getattr(shared.opts, 'tagger_use_space_separator', False)
-    tag_line, h_tags, h_lost = It.postprocess_tags(
-        tags, lost, use_space_separator=use_space)
+    sep = ' ' if getattr(shared.opts, 'tagger_use_space_separator', False) else ', '
+    sorted_tag_items = sorted(tags.items(), key=lambda x: x[1], reverse=True)
+    sorted_lost_items = sorted(lost.items(), key=lambda x: x[1], reverse=True)
+    tag_line = sep.join(map(lambda x: x[0], sorted_tag_items))
+    h_tags = sep.join(
+        f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
+        f'true)">{k}</a>' for k, _ in sorted_tag_items
+    )
+    h_lost = sep.join(
+        f'<a href="javascript:tag_clicked(\'{html_esc(k)}\','
+        f'false)">{k}</a>' for k, _ in sorted_lost_items
+    )
 
     return (tag_line, h_tags, h_lost, ratings, tags, lost, info)
 
