@@ -36,11 +36,17 @@ COMMON_OUTPUT = Tuple[
 ]
 
 
+def tagger_output_separator() -> str:
+    """Between tags in the Tagger tab string/HTML output."""
+    use_space = getattr(shared.opts, 'tagger_use_space_separator', True)
+    return ' ' if use_space else ', '
+
+
 def register_tagger_use_space_separator_option() -> None:
     shared.opts.add_option(
         key='tagger_use_space_separator',
         info=shared.OptionInfo(
-            False,
+            True,
             label='Use space separator instead of comma (for Booru upload)',
             section=('tagger', 'Tagger'),
         ),
@@ -144,7 +150,7 @@ def move_selection_to_input(
     if len(tags) == 0:
         return ('', None, '')
 
-    sep = ' ' if getattr(shared.opts, 'tagger_use_space_separator', False) else ', '
+    sep = tagger_output_separator()
     if got != '':
         got = got + sep
 
@@ -178,7 +184,7 @@ def search_filter(filt: str) -> COMMON_OUTPUT:
         tags = {k: v for k, v in tags.items() if re_part.search(k)}
         lost = {k: v for k, v in lost.items() if re_part.search(k)}
 
-    sep = ' ' if getattr(shared.opts, 'tagger_use_space_separator', False) else ', '
+    sep = tagger_output_separator()
     sorted_tag_items = sorted(tags.items(), key=lambda x: x[1], reverse=True)
     sorted_lost_items = sorted(lost.items(), key=lambda x: x[1], reverse=True)
     tag_line = sep.join(map(lambda x: x[0], sorted_tag_items))
